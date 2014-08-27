@@ -1,0 +1,30 @@
+/*
+================================================================================
+Comment Upvoter Stylesheet
+================================================================================
+AUTHOR: Christian Wach <needle@haystack.co.uk>
+--------------------------------------------------------------------------------
+NOTES
+
+--------------------------------------------------------------------------------
+*/
+
+.comment-identifier .comment-upvote
+{
+	margin-left: 2%;
+	font-size: 70%;
+}
+
+.comment-identifier .comment-upvote a
+{
+	cursor: pointer;
+	text-transform: uppercase;
+	font-family: sans-serif;
+	color: #bbb;
+	text-decoration: none;
+}
+
+.comment-identifier .comment-upvote a:hover
+{
+	color: #761D19;
+}
