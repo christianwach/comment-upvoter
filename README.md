@@ -1,7 +1,7 @@
 Comment Upvoter
 ===============
 
-Lets logged-in readers click an "upvote" button. Designed for use with CommentPress Core.
+A WordPress plugin that lets logged-in readers click an "upvote" button. Designed for use with CommentPress Core.
 
 ## Installation ##
 
