@@ -20,9 +20,3 @@ If you have downloaded *Comment Upvoter* as a ZIP file from the GitHub repositor
 #### git clone ####
 
 If you have cloned the code from GitHub, it is assumed that you know what you're doing.
-
-## Changelogs ##
-
-### 0.1 ###
-
-Initial commit
