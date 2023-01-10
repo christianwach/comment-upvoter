@@ -3,7 +3,7 @@
  * Plugin Name: Comment Upvoter
  * Plugin URI: https://github.com/christianwach/comment-upvoter
  * Description: Lets logged-in readers "like" a comment. Designed for use with CommentPress Core.
- * Version: 0.2
+ * Version: 0.3a
  * Author: Christian Wach
  * Author URI: https://haystack.co.uk
  * Text Domain: comment-upvoter
@@ -17,7 +17,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define version. Bumping this refreshes CSS and JS.
-define( 'COMMENT_UPVOTER_VERSION', '0.2' );
+define( 'COMMENT_UPVOTER_VERSION', '0.3a' );
 
 
 
