@@ -1,19 +1,22 @@
-<?php /*
---------------------------------------------------------------------------------
-Plugin Name: Comment Upvoter
-Description: Lets logged-in readers "like" a comment. Designed for use with CommentPress Core.
-Version: 0.2
-Author: Christian Wach
-Author URI: http://haystack.co.uk
-Plugin URI: http://haystack.co.uk
---------------------------------------------------------------------------------
-Hat tip: http://pippinsplugins.com/featured-comments
---------------------------------------------------------------------------------
-*/
+<?php
+/**
+ * Plugin Name: Comment Upvoter
+ * Plugin URI: https://github.com/christianwach/comment-upvoter
+ * Description: Lets logged-in readers "like" a comment. Designed for use with CommentPress Core.
+ * Version: 0.2
+ * Author: Christian Wach
+ * Author URI: https://haystack.co.uk
+ * Text Domain: comment-upvoter
+ * Domain Path: /languages
+ * Kudos to: http://pippinsplugins.com/featured-comments
+ *
+ * @package Comment_Upvoter
+ */
 
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
-
-// define version (bumping this refreshes CSS and JS)
+// Define version. Bumping this refreshes CSS and JS.
 define( 'COMMENT_UPVOTER_VERSION', '0.2' );
 
 
@@ -32,7 +35,7 @@ class Comment_Upvoter {
 	 *
 	 * @since 0.1
 	 * @access private
-	 * @var object $instance The class instance
+	 * @var object $instance The class instance.
 	 */
 	private static $instance;
 
@@ -41,7 +44,7 @@ class Comment_Upvoter {
 	 *
 	 * @since 0.1
 	 * @access private
-	 * @var str $action The action name
+	 * @var str $action The action name.
 	 */
 	private static $action;
 
@@ -50,32 +53,40 @@ class Comment_Upvoter {
 	 *
 	 * @since 0.1
 	 * @access private
-	 * @var str $action The action name
+	 * @var str $label The name of the identifying label.
 	 */
 	private static $label;
 
-
+	/**
+	 * The AJAX nonce action.
+	 *
+	 * @since 0.2
+	 * @access private
+	 * @var str $nonce_action The AJAX nonce action.
+	 */
+	private static $nonce_action = 'upvoter_comment_nonce';
 
 	/**
 	 * Returns an instance of this class.
 	 *
 	 * @since 0.1
 	 *
-	 * @staticvar object $instance
-	 * @return object Comment_Upvoter instance
+	 * @return Comment_Upvoter $instance The plugin instance.
 	 */
 	public static function instance() {
 
-		// do we have it?
+		// Do we have it?
 		if ( ! isset( self::$instance ) ) {
 
-			// instantiate
-			self::$instance = new Comment_Upvoter;
+			// Bootstrap.
+			self::$instance = new Comment_Upvoter();
+			self::$instance->initialise();
 
-			// init
-			self::$instance->init();
-
-			// broadcast to other plugins
+			/**
+			 * Fires when this plugin has loaded.
+			 *
+			 * @since 0.1
+			 */
 			do_action( 'comment_upvoter_loaded' );
 
 		}
@@ -85,71 +96,61 @@ class Comment_Upvoter {
 
 	}
 
-
-
 	/**
 	 * Initialise object.
 	 *
 	 * @since 0.1
 	 */
-	private function init() {
+	private function initialise() {
 
-		// define action
+		// Define action.
 		self::$action = 'upvote';
 
-		// define label
+		// Define label.
 		self::$label = __( 'Like', 'comment-upvoter' );
 
-		// use translation
-		add_action( 'plugins_loaded', array( $this, 'enable_translation' ) );
+		// Use translation.
+		add_action( 'plugins_loaded', [ $this, 'enable_translation' ] );
 
-		// inject Javascript
-		add_action( 'wp_enqueue_scripts', array( $this, 'print_scripts' ) );
+		// Inject Javascript.
+		add_action( 'wp_enqueue_scripts', [ $this, 'print_scripts' ] );
 
-		// inject CSS
-		add_action( 'wp_enqueue_scripts', array( $this, 'print_styles' ) );
+		// Inject CSS.
+		add_action( 'wp_enqueue_scripts', [ $this, 'print_styles' ] );
 
-		// register with AJAX handler
-		add_action( 'wp_ajax_comment_upvoter', array( $this, 'ajax' ) );
-		add_action( 'wp_ajax_nopriv_comment_upvoter', array( $this, 'ajax' ) );
+		// Register with AJAX handler.
+		add_action( 'wp_ajax_comment_upvoter', [ $this, 'ajax' ] );
+		add_action( 'wp_ajax_nopriv_comment_upvoter', [ $this, 'ajax' ] );
 
-		// filter comment text
-		add_filter( 'cp_comment_action_links', array( $this, 'comment_action' ), 10, 2 );
+		// Filter comment text.
+		add_filter( 'cp_comment_action_links', [ $this, 'comment_action' ], 10, 2 );
 
-		// create special page link
-		//add_action( 'cp_before_blog_page', array( $this, 'comment_page_link' ), 11 );
+		/*
+		// Create special page link.
+		add_action( 'cp_before_blog_page', [ $this, 'comment_page_link' ), 11 ];
+		*/
 
 	}
-
-
 
 	/**
 	 * Load translation files.
 	 *
 	 * A good reference on how to implement translation in WordPress:
-	 * http://ottopress.com/2012/internationalization-youre-probably-doing-it-wrong/
+	 *
+	 * @see http://ottopress.com/2012/internationalization-youre-probably-doing-it-wrong/
 	 *
 	 * @since 0.1
 	 */
 	public function enable_translation() {
 
-		// load translations
+		// Load translations.
 		load_plugin_textdomain(
-
-			// unique name
 			'comment-upvoter',
-
-			// deprecated argument
 			false,
-
-			// relative path to directory containing translation files
 			dirname( plugin_basename( __FILE__ ) ) . '/languages/'
-
 		);
 
 	}
-
-
 
 	/**
 	 * Enqueue plugin Javacript.
@@ -158,24 +159,26 @@ class Comment_Upvoter {
 	 */
 	public function print_scripts() {
 
-		// enqueue javascript
+		// Enqueue javascript.
 		wp_enqueue_script(
 			'comment_upvoter',
 			plugin_dir_url( __FILE__ ) . 'comment-upvoter.js',
-			array( 'jquery' ),
-			COMMENT_UPVOTER_VERSION
+			[ 'jquery' ],
+			COMMENT_UPVOTER_VERSION,
+			false
 		);
 
-		// add localisation
+		// Add localisation.
 		wp_localize_script(
 			'comment_upvoter',
 			'comment_upvoter',
-			array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+			[
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'ajax_nonce' => wp_create_nonce( self::$nonce_action ),
+			]
 		);
 
 	}
-
-
 
 	/**
 	 * Enqueue plugin stylesheet.
@@ -184,18 +187,16 @@ class Comment_Upvoter {
 	 */
 	public function print_styles() {
 
-		// add basic stylesheet
+		// Add basic stylesheet.
 		wp_enqueue_style(
 			'comment_upvoter_css',
 			plugin_dir_url( __FILE__ ) . 'comment-upvoter.css',
 			false,
-			COMMENT_UPVOTER_VERSION, // version
-			'all' // media
+			COMMENT_UPVOTER_VERSION, // Version.
+			'all' // Media.
 		);
 
 	}
-
-
 
 	/**
 	 * Respond to AJAX requests.
@@ -204,97 +205,126 @@ class Comment_Upvoter {
 	 */
 	public function ajax() {
 
-		// bail if no param
-		if ( ! isset( $_POST['do'] ) ) die();
+		// Init return.
+		$data = [
+			'success' => false,
+			'count' => false,
+		];
 
-		// get action
-		$action = $_POST['do'];
+		// Since this is an AJAX request, check security.
+		$result = check_ajax_referer( self::$nonce_action, false, false );
+		if ( $result === false ) {
+			wp_send_json( $data );
+		}
 
-		// bail if not ours
-		if ( $action != self::$action ) die();
+		// Get "action". This should be "upvote".
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$action = isset( $_POST['is_upvote'] ) ? sanitize_text_field( wp_unslash( $_POST['is_upvote'] ) ) : '';
 
-		// get comment ID
-		$comment_id = absint( $_POST['comment_id'] );
+		// Bail if no action.
+		if ( empty( $action ) ) {
+			wp_send_json( $data );
+		}
 
-		// bail if not a valid comment
-		if ( ! $comment = get_comment( $comment_id ) ) die();
+		// Bail if not ours.
+		if ( $action != self::$action ) {
+			wp_send_json( $data );
+		}
 
-		// get existing meta
+		// Try to get the comment ID.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$comment_id = isset( $_POST['comment_id'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['comment_id'] ) ) : false;
+		if ( empty( $comment_id ) ) {
+			wp_send_json( $data );
+		}
+
+		// Bail if not a valid comment.
+		$comment = get_comment( $comment_id );
+		if ( ! $comment ) {
+			wp_send_json( $data );
+		}
+
+		// Get existing meta.
 		$count = self::get_comment_upvotes( $comment_id );
 
-		// increment
+		// Increment.
 		$count++;
 
-		// thumbs up!
+		// Okay, update meta.
 		update_comment_meta( $comment_id, 'upvotes', $count );
 
-		// that's all folks
-		die();
+		// Update data.
+		$data['success'] = true;
+		$data['count'] = $count;
+
+		// That's all folks.
+		wp_send_json( $data );
 
 	}
-
-
 
 	/**
 	 * Show our button.
 	 *
 	 * @since 0.1
 	 *
-	 * @param string $existing The existing comment action string
-	 * @param object $comment The WordPress comment object
-	 * @return string $existing The modified comment action string
+	 * @param string $existing The existing comment action string.
+	 * @param object $comment The WordPress comment object.
+	 * @return string $existing The modified comment action string.
 	 */
 	public function comment_action( $existing, $comment ) {
 
-		// get ID
+		// Get ID.
 		$comment_id = $comment->comment_ID;
 
-		// get existing meta
+		// Get existing meta.
 		$count = self::get_comment_upvotes( $comment_id );
 
-		// init return
+		// Init return.
 		$html = '<span class="alignright comment-upvote">';
 
-		// add our link
-		$html .= '<a href="' . $_SERVER['REQUEST_URI'] . '" ' .
-					'class="comment_upvoter ' . self::$action . '" ' .
-					'data-do="' . self::$action . '" ' .
-					'data-comment_id="' . $comment_id .  '" ' .
-					'title="' . self::$label . '">' .
-					self::$label . ' (<span class="upvotes">' . $count . '</span>)' .
-				 '</a>';
+		// Try and get the requesting URL.
+		$link = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 
-		// close
+		// Add our link.
+		$html .= '<a href="' . $link . '" ' .
+			'class="comment_upvoter ' . self::$action . '" ' .
+			'data-do="' . self::$action . '" ' .
+			'data-comment_id="' . $comment_id . '" ' .
+			'title="' . self::$label . '">' .
+			self::$label . ' (<span class="upvotes">' . $count . '</span>)' .
+		'</a>';
+
+		// Close.
 		$html .= '</span>';
 
-		// prepend to existing
+		// Prepend to existing.
 		$existing = $html . $existing;
 
 		// --<
 		return $existing;
 
-    }
-
-
+	}
 
 	/**
 	 * Get current number of upvotes.
 	 *
 	 * @since 0.1
 	 *
-	 * @param int $comment_id The numerical ID of the comment
-	 * @return int $count The number of upvotes
+	 * @param int $comment_id The numeric ID of the comment.
+	 * @return int $count The number of upvotes.
 	 */
 	public function get_comment_upvotes( $comment_id ) {
 
-		// get existing
+		// Get existing.
 		$count = get_comment_meta( $comment_id, 'upvotes', true );
 
-		// did we get one?
-		if ( $count === '' ) $count = 0;
+		// Did we get one?
+		if ( $count === '' ) {
+			$count = 0;
+		}
 
-		// cast as integer
-		$count = absint( $count );
+		// Cast as integer.
+		$count = (int) $count;
 
 		// --<
 		return $count;
@@ -304,21 +334,16 @@ class Comment_Upvoter {
 
 }
 
-
-
 /**
  * Instantiate plugin object.
  *
  * @since 0.1
  *
- * @return object the plugin instance
+ * @return Comment_Upvoter The plugin instance.
  */
 function wp_comment_upvoter_load() {
 	return Comment_Upvoter::instance();
 }
 
-// init Comment Upvoter
+// Bootstrap Comment Upvoter.
 wp_comment_upvoter_load();
-
-
-

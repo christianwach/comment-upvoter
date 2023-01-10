@@ -1,13 +1,8 @@
-/*
-================================================================================
-Comment Upvoter Javascript
-================================================================================
-AUTHOR: Christian Wach <needle@haystack.co.uk>
---------------------------------------------------------------------------------
-NOTES
-
---------------------------------------------------------------------------------
-*/
+/**
+ * Comment Upvoter Javascript.
+ *
+ * @package Comment_Upvoter
+ */
 
 /**
  * Set up clicks on our "Like" elements.
@@ -16,52 +11,62 @@ NOTES
  */
 function comment_upvoter_click() {
 
-	// define vars
+	// Define vars.
 	var me, counter, upvotes;
 
-	// unbind first - allows this function to be called multiple times
+	// Unbind first - allows this function to be called multiple times.
 	jQuery( '.comment_upvoter' ).unbind( 'click' );
 
-	// rebind
+	// Rebind.
 	jQuery( '.comment_upvoter' ).click( function( event ) {
 
-		// store this
+		// Store this.
 		me = jQuery(this);
 
-		// send ajax request
-		jQuery.post (
+		// Send ajax request.
+		jQuery.post(
 
-			// url
+			// Target URL.
 			comment_upvoter.ajax_url,
 
-			// data
+			// Add data.
 			{
-				'action' : 'comment_upvoter',
-				'do': me.attr( 'data-do' ),
-				'comment_id': me.attr( 'data-comment_id' )
+				action: 'comment_upvoter',
+				is_upvote: me.attr( 'data-do' ),
+				comment_id: me.attr( 'data-comment_id' ),
+				_ajax_nonce: comment_upvoter.ajax_nonce
 			},
 
-			// on response
-			function ( response ) {
+			/**
+			 * AJAX callback.
+			 *
+			 * @since 0.1
+			 *
+			 * @param {String} response The response from the server.
+			 */
+			function( response ) {
 
-				// update counter
+				// Bail on failure.
+				if ( ! response.success ) {
+					return;
+				}
+
+				// Update counter.
 				counter = me.children( 'span.upvotes' );
-				upvotes = parseInt( counter.text() );
-				counter.text( (upvotes + 1).toString() );
+				upvotes = parseInt( response.count );
+				counter.text( upvotes.toString() );
 
 			}
 
 		);
 
-		// prevent link from being followed
+		// Prevent link from being followed.
 		event.preventDefault();
 		return false;
 
 	});
 
 }
-
-
 
 /**
  * Initialise on document ready.
@@ -70,9 +75,7 @@ function comment_upvoter_click() {
  */
 jQuery(document).ready( function($) {
 
-	// init click handler
+	// Init click handler.
 	comment_upvoter_click();
 
 });
-
-
